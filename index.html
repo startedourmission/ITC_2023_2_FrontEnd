@@ -71,7 +71,7 @@
         <h3>과목 추가</h3>
         <form @submit.prevent="addItem(year)">
           <div>
-            <label :for="'subjectName' + year">과목명:</label>
+            <label :for="'subjectName' + year">과목명</label>
             <input type="text" :id="'subjectName' + year" v-model="newSubject[year].subjectName" required>
           </div>
           <div>
@@ -143,10 +143,12 @@
 
           this.academicYears[year].push(newItem);
           this.showAddFormB[year] = false;
-       s },
+        },
         getNextId(year) {
           const subjects = year === 1 ? this.year1Subjects : this.year2Subjects;
-          const ids = subjects.map(subject => subject.id);
+          if (subjects && subjects.length > 0) {
+            const ids = subjects.map(subject => subject.id);
+          }else return 0;
           return ids.length > 0 ? Math.max(...ids) + 1 : 1;
         },
         saveItems(year) {
@@ -159,18 +161,25 @@
           this.showAddFormB[year] = false;
         },
         calculateTotalCredit(subjects) {
-          let totalCredit = 0;
-          for (const subject of subjects) {
-            totalCredit += subject.credit;
+          if (subjects && subjects.length > 0) {
+            let totalCredit = subjects.map(subject => subject.credit).reduce((a, b) => a + b, 0);
+            return totalCredit;
+          } else {
+            return 0; // 배열이 비어 있거나 정의되지 않은 경우 기본 값 반환
           }
-          return totalCredit;
         },
         calculateTotal(subjects, property) {
-          let total = 0;
-          for (const subject of subjects) {
-            total += subject[property];
+          if (subjects && subjects.length > 0) {
+
+            let total = 0;
+            for (const subject of subjects) {
+              total += subject[property];
+            }
+            return total;
           }
-          return total;
+          else {
+            return 0
+          }
         },
         calculateAverage(subjects) {
           let total = this.calculateTotal(subjects, 'average');
