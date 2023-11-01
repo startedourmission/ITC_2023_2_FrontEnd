@@ -218,11 +218,13 @@
           else return 'F';
         },
         getNextId(year) {
-          const subjects = year === 1 ? this.year1Subjects : this.year2Subjects;
+          const subjects = this.academicYears[year]
           if (subjects && subjects.length > 0) {
             const ids = subjects.map(subject => subject.id);
-          }else return 0;
-          return ids.length > 0 ? Math.max(...ids) + 1 : 1;
+            return ids.length > 0 ? Math.max(...ids) + 1 : 1;
+          } else {
+            return 1; // 배열이 비어 있을 때는 기본값 1 반환
+  }
         },
         deleteSelectedRows() {
           const checkboxes = document.querySelectorAll(".delete-checkbox");
@@ -233,6 +235,7 @@
           for (const row of rowsToDelete) {
             row.remove();
           }
+
         },
         saveItems(year) {
           // 저장 로직 추가
