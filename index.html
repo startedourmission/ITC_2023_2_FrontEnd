@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Front-End Project</title>
+</head>
+<body>
+  <div id="app">
+    <div class="year" v-for="(yearSubjects, year) in academicYears" :key="year">
+      <h2>{{ year }}</h2>
+      <button @click="showAddForm(year)">추가</button>
+      <button @click="saveItems(year)">저장</button>
+      <table class="styled-table">
+        <thead>
+          <tr>
+            <th>이수</th>
+            <th>필수</th>
+            <th>과목명</th>
+            <th>학젝</th>
+            <th>출석점수</th>
+            <th>과제점수</th>
+            <th>중간고사</th>
+            <th>기말고사</th>
+            <th>총점</th>
+            <th>평균</th>
+            <th>성적</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="subject in yearSubjects" :key="subject.id">
+            <td>
+              <select v-model="subject.isu">
+                <option value="전공">전공</option>
+                <option value="교양">교양</option>
+              </select>
+            </td>
+            <td>
+              <select v-model="subject.required">
+                <option value="필수">필수</option>
+                <option value="선택">선택</option>
+              </select>
+            </td>
+            <td class="subjectName">{{ subject.subjectName }}</td>
+            <td>{{ subject.credit }}</td>
+            <td>{{ subject.attendanceScore }}</td>
+            <td>{{ subject.assignmentScore }}</td>
+            <td>{{ subject.midtermScore }}</td>
+            <td>{{ subject.finalExamScore }}</td>
+            <td>{{ subject.totalScore }}</td>
+            <td>{{ subject.average }}</td>
+            <td :class="{ 'f-grade': subject.grade === 'F' }">{{ subject.grade }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">합계</td>
+            <td>{{ calculateTotalCredit(yearSubjects) }}</td>
+            <td>{{ calculateTotal(yearSubjects, 'attendanceScore') }}</td>
+            <td>{{ calculateTotal(yearSubjects, 'assignmentScore') }}</td>
+            <td>{{ calculateTotal(yearSubjects, 'midtermScore') }}</td>
+            <td>{{ calculateTotal(yearSubjects, 'finalExamScore') }}</td>
+            <td>{{ calculateTotal(yearSubjects, 'totalScore') }}</td>
+            <td>{{ calculateAverage(yearSubjects) }}</td>
+            <td>{{ calculateAverageAlpha(yearSubjects) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+      <div class="add-form" v-show="showAddFormB[year]">
+        <h3>과목 추가</h3>
+        <form @submit.prevent="addItem(year)">
+          <div>
+            <label :for="'subjectName' + year">과목명:</label>
+            <input type="text" :id="'subjectName' + year" v-model="newSubject[year].subjectName" required>
+          </div>
+          <div>
+            <label :for="'credit' + year">학점:</label>
+            <input type="number" :id="'credit' + year" v-model="newSubject[year].credit" required>
+          </div>
+          <!-- Add the rest of the form fields and bindings here -->
+          <button type="submit">추가</button>
+          <button @click="cancelAddForm(year)">취소</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    const app = Vue.createApp({
+      data() {
+        return {
+          academicYears: {
+            "1학년": [],
+            "2학년": [],
+          },
+          showAddFormB: {
+            "1학년": false,
+            "2학년": false,
+          },
+          newSubject: {
+            "1학년": {
+              subjectName: "",
+              credit: 0,
+              attendanceScore: 0,
+              assignmentScore: 0,
+              midtermScore: 0,
+              finalExamScore: 0,
+              totalScore: 0,
+              average: 0,
+              grade: "",
+            },
+            "2학년": {
+              subjectName: "",
+              credit: 0,
+              attendanceScore: 0,
+              assignmentScore: 0,
+              midtermScore: 0,
+              finalExamScore: 0,
+              totalScore: 0,
+              average: 0,
+              grade: "",
+            },
+          },
+        };
+      },
+      methods: {
+        addItem(year) {
+          const newItem = {
+            id: this.getNextId(year),
+            isu: "전공",
+            required: "필수",
+            subjectName: this.newSubject[year].subjectName,
+            credit: this.newSubject[year].credit,
+            attendanceScore: 0, // Add other default values as needed
+            assignmentScore: 0,
+            midtermScore: 0,
+            finalExamScore: 0,
+            totalScore: 0,
+            average: 0,
+            grade: "",
+          };
+
+          this.academicYears[year].push(newItem);
+          this.showAddFormB[year] = false;
+       s },
+        getNextId(year) {
+          const subjects = year === 1 ? this.year1Subjects : this.year2Subjects;
+          const ids = subjects.map(subject => subject.id);
+          return ids.length > 0 ? Math.max(...ids) + 1 : 1;
+        },
+        saveItems(year) {
+          // 저장 로직 추가
+        },
+        showAddForm(year) {
+          this.showAddFormB[year] = true; // This should display the form
+        },
+        cancelAddForm(year) {
+          this.showAddFormB[year] = false;
+        },
+        calculateTotalCredit(subjects) {
+          let totalCredit = 0;
+          for (const subject of subjects) {
+            totalCredit += subject.credit;
+          }
+          return totalCredit;
+        },
+        calculateTotal(subjects, property) {
+          let total = 0;
+          for (const subject of subjects) {
+            total += subject[property];
+          }
+          return total;
+        },
+        calculateAverage(subjects) {
+          let total = this.calculateTotal(subjects, 'average');
+          let pcnt = 0
+          for (const subject of subjects){
+            if (subject.credit == 1) pcnt += 1
+          }
+          return (total / (subjects.length - pcnt)).toFixed(1);
+        },
+        calculateAverageAlpha(subjects) {
+          let total = 0
+          let pcnt = 0
+          for (const subject of subjects) {
+            switch (subject.grade) {
+              case 'A+':
+                total += 4.5;
+                break;
+              case 'A':
+                total += 4.0;
+                break;
+              case 'B+':
+                total +=  3.5;
+                break;
+              case 'B':
+                total += 3.0;
+                break;
+              case 'C+':
+                total += 2.5;
+                break;
+              case 'C':
+                total += 2.0;
+                break;
+              case 'D+':
+                total += 1.5;
+                break;
+              case 'D':
+                total += 1.0;
+                break;
+              case 'F':
+                total += 0.0;
+                break;
+              default:
+                pcnt += 1; // 기본값 (알 수 없는 학점)
+            }
+          }
+          return (total / (subjects.length - pcnt)).toFixed(1);
+        },
+        
+        // sortTable(column) {
+        //   this.year1Subjects.sort((a, b) => {
+        //     if (a.isu === '교양' && b.isu === '전공') {
+        //       return -1; // 교양이 전공보다 우선
+        //     } else if (a.isu === '전공' && b.isu === '교양') {
+        //       return 1; // 전공이 교양보다 뒤에 옴
+        //     } else if (a.required === '필수' && b.required === '선택') {
+        //       return -1; // 필수가 선택보다 우선
+        //     } else if (a.required === '선택' && b.required === '필수') {
+        //       return 1; // 선택이 필수보다 뒤에 옴
+        //     } else {
+        //       // 그 외 경우는 과목명을 오름차순으로 정렬
+        //       return a.subjectName.localeCompare(b.subjectName);
+        //     }
+        //     });
+        //   },
+        },
+
+        mounted() {
+          // 페이지 로딩 시 자동으로 이수, 필수, 과목명으로 정렬
+          // this.sortTable('isu');
+          // this.sortTable('required')
+          // this.sortTable('subjectName')
+        },
+      })
+      app.mount('#app')
+    </script>
+    
+  </body>
+  <style>
+    .styled-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 25px 0;
+      font-size: 0.9em;
+      font-family: sans-serif;
+      min-width: 400px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+
+    }
+
+    .styled-table thead tr {
+      background-color: #009879;
+      color: #ffffff;
+    }
+
+    .styled-table th,
+    .styled-table td {
+      padding: 12px 15px;
+    }
+
+    .styled-table tbody tr {
+      border-bottom: 1px solid #dddddd;
+    }
+
+    .styled-table tbody tr:nth-of-type(even) {
+      background-color: #f3f3f3;
+    }
+    .styled-table tfoot tr {
+      background-color: #eeeeee;
+      color: #000000;
+    }
+    .styled-table tfoot tr:last-of-type {
+      border-bottom: 2px solid #009879;
+    }
+
+    .action-buttons {
+      text-align: right; /* 버튼 가운데 정렬 */
+    }
+
+    #subjectName{
+      text-align: left;
+    }
+
+    .f-grade {
+      color: red;
+    }
+
+    .add-form {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 20px;
+  }
+
+  .add-form h3 {
+    font-size: 18px;
+    color: #333;
+    margin: 0 0 10px;
+  }
+
+  .add-form label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  .add-form input[type="text"],
+  .add-form input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .add-form button {
+    background-color: #009879;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .add-form button:hover {
+    background-color: #007b6b;
+  }
+  </style>
+</html>
