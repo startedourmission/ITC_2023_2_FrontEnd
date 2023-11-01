@@ -11,14 +11,16 @@
     <div class="year" v-for="(yearSubjects, year) in academicYears" :key="year">
       <h2>{{ year }}</h2>
       <button @click="showAddForm(year)">추가</button>
+      <button @click="deleteSelectedRows()">삭제</button>
       <button @click="saveItems(year)">저장</button>
       <table class="styled-table">
         <thead>
           <tr>
+            <th>선택</th>
             <th>이수</th>
             <th>필수</th>
             <th>과목명</th>
-            <th>학젝</th>
+            <th>학점</th>
             <th>출석점수</th>
             <th>과제점수</th>
             <th>중간고사</th>
@@ -30,6 +32,8 @@
         </thead>
         <tbody>
           <tr v-for="subject in yearSubjects" :key="subject.id">
+            <td><input type="checkbox" class="delete-checkbox"></td>
+
             <td>
               <select v-model="subject.isu">
                 <option value="전공">전공</option>
@@ -55,7 +59,7 @@
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="3">합계</td>
+            <td colspan="4">합계</td>
             <td>{{ calculateTotalCredit(yearSubjects) }}</td>
             <td>{{ calculateTotal(yearSubjects, 'attendanceScore') }}</td>
             <td>{{ calculateTotal(yearSubjects, 'assignmentScore') }}</td>
@@ -78,9 +82,25 @@
             <label :for="'credit' + year">학점:</label>
             <input type="number" :id="'credit' + year" v-model="newSubject[year].credit" required>
           </div>
+          <div>
+            <label :for="'credit' + year">출석점수:</label>
+            <input type="number" :id="'attendanceScore' + year" v-model="newSubject[year].attendanceScore">
+          </div>
+          <div>
+            <label :for="'credit' + year">과제점수:</label>
+            <input type="number" :id="'assignmentScore' + year" v-model="newSubject[year].assignmentScore">
+          </div>
+          <div>
+            <label :for="'credit' + year">중간고사:</label>
+            <input type="number" :id="'midtermScore' + year" v-model="newSubject[year].midtermScore">
+          </div>
+          <div>
+            <label :for="'credit' + year">기말고사:</label>
+            <input type="number" :id="'finalExamScore' + year" v-model="newSubject[year].finalExamScore">
+          </div>
           <!-- Add the rest of the form fields and bindings here -->
           <button type="submit">추가</button>
-          <button @click="cancelAddForm(year)">취소</button>
+          <button type ="reset" @click="cancelAddForm(year)">취소</button>
         </form>
       </div>
     </div>
@@ -93,10 +113,12 @@
           academicYears: {
             "1학년": [],
             "2학년": [],
+            "3학년": [],
           },
           showAddFormB: {
             "1학년": false,
             "2학년": false,
+            "3학년": false,
           },
           newSubject: {
             "1학년": {
@@ -121,28 +143,79 @@
               average: 0,
               grade: "",
             },
+            "3학년": {
+              subjectName: "",
+              credit: 0,
+              attendanceScore: 0,
+              assignmentScore: 0,
+              midtermScore: 0,
+              finalExamScore: 0,
+              totalScore: 0,
+              average: 0,
+              grade: "",
+            },
           },
         };
       },
       methods: {
         addItem(year) {
+          var tmp = parseInt(this.newSubject[year].attendanceScore) + parseInt(this.newSubject[year].assignmentScore) + parseInt(this.newSubject[year].midtermScore) + parseInt(this.newSubject[year].finalExamScore);
           const newItem = {
             id: this.getNextId(year),
             isu: "전공",
             required: "필수",
             subjectName: this.newSubject[year].subjectName,
             credit: this.newSubject[year].credit,
-            attendanceScore: 0, // Add other default values as needed
-            assignmentScore: 0,
-            midtermScore: 0,
-            finalExamScore: 0,
-            totalScore: 0,
-            average: 0,
-            grade: "",
+            attendanceScore: this.newSubject[year].attendanceScore,
+            assignmentScore: this.newSubject[year].assignmentScore,
+            midtermScore: this.newSubject[year].midtermScore,
+            finalExamScore: this.newSubject[year].finalExamScore,
+            totalScore: tmp,
+            average: "",
+            grade: this.getGrade(tmp, parseInt(this.newSubject[year].credit)),
           };
+          if (this.isDuplicateSubject(year, newItem.subjectName)) {
+            alert('이미 같은 과목명이 존재합니다. 중복 입력이 불가능합니다.');
+            return;
+            }
+            if(newItem.credit != 1){
+              if(newItem.attendanceScore < 0 || newItem.attendanceScore > 20){
+              alert('출석점수 범위를 초과하였습니다. (0~20)')
+              return;
+            }
+            if(newItem.assignmentScore < 0 || newItem.assignmentScore > 20){
+              alert('과제점수 범위를 초과하였습니다. (0~20)')
+              return;
+            }
+            if(newItem.midtermScore < 0 || newItem.midtermScore > 30){
+              alert('중간고사 점수 범위를 초과하였습니다. (0~30)')
+              return;
+            }
+            if(newItem.finalExamScore < 0 || newItem.finalExamScore > 30){
+              alert('기말고사 점수 범위를 초과하였습니다. (0~30)')
+              return;
+            }
+          }
 
           this.academicYears[year].push(newItem);
           this.showAddFormB[year] = false;
+        },
+        isDuplicateSubject(year, subjectName) {
+          return this.academicYears[year].some(subject => subject.subjectName === subjectName);
+        },
+        getGrade(score, c){
+          if(c == 1){
+            return 'P';
+          }
+          if(score >= 95) return 'A+';
+          else if(score >= 90) return 'A0';
+          else if(score >= 85) return 'B+';
+          else if(score >= 80) return 'B0';
+          else if(score >= 75) return 'C+';
+          else if(score >= 70) return 'C0';
+          else if(score >= 65) return 'D+';
+          else if(score >= 60) return 'D0';
+          else return 'F';
         },
         getNextId(year) {
           const subjects = year === 1 ? this.year1Subjects : this.year2Subjects;
@@ -150,6 +223,16 @@
             const ids = subjects.map(subject => subject.id);
           }else return 0;
           return ids.length > 0 ? Math.max(...ids) + 1 : 1;
+        },
+        deleteSelectedRows() {
+          const checkboxes = document.querySelectorAll(".delete-checkbox");
+          const rowsToDelete = Array.from(checkboxes)
+            .filter(checkbox => checkbox.checked)
+            .map(checkbox => checkbox.closest("tr"));
+
+          for (const row of rowsToDelete) {
+            row.remove();
+          }
         },
         saveItems(year) {
           // 저장 로직 추가
@@ -182,7 +265,7 @@
           }
         },
         calculateAverage(subjects) {
-          let total = this.calculateTotal(subjects, 'average');
+          let total = this.calculateTotal(subjects, 'totalScore');
           let pcnt = 0
           for (const subject of subjects){
             if (subject.credit == 1) pcnt += 1
@@ -197,25 +280,25 @@
               case 'A+':
                 total += 4.5;
                 break;
-              case 'A':
+              case 'A0':
                 total += 4.0;
                 break;
               case 'B+':
                 total +=  3.5;
                 break;
-              case 'B':
+              case 'B0':
                 total += 3.0;
                 break;
               case 'C+':
                 total += 2.5;
                 break;
-              case 'C':
+              case 'C0':
                 total += 2.0;
                 break;
               case 'D+':
                 total += 1.5;
                 break;
-              case 'D':
+              case 'D0':
                 total += 1.0;
                 break;
               case 'F':
@@ -258,6 +341,9 @@
     
   </body>
   <style>
+    button{
+      margin: 2px;
+    }
     .styled-table {
       width: 100%;
       border-collapse: collapse;
